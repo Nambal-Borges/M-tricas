@@ -2,10 +2,15 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from io import BytesIO
+import matplotlib.pyplot as plt
+
+# Funções adicionais
+import plotly.express as px
+import numpy as np
 
 # Título e descrição
 st.title("Dashboard de Métricas de Campanhas Publicitárias")
-st.write("Monitore o desempenho das suas campanhas de maneira interativa.")
+st.write("Monitore o desempenho das suas campanhas de maneira interativa e dinâmica.")
 
 # Seção para entrada de dados da campanha
 st.sidebar.header("Insira os dados da campanha")
@@ -14,6 +19,11 @@ impressoes = st.sidebar.number_input("Impressões (Total de visualizações):", 
 cliques = st.sidebar.number_input("Cliques no anúncio:", min_value=0)
 valor_investido = st.sidebar.number_input("Valor investido na campanha (R$):", min_value=0.0, format="%.2f")
 valor_faturado = st.sidebar.number_input("Valor faturado (R$):", min_value=0.0, format="%.2f")
+
+# Seção para filtrar por data
+st.sidebar.header("Filtro por Data")
+start_date = st.sidebar.date_input('Data de Início')
+end_date = st.sidebar.date_input('Data de Fim')
 
 # Cálculos de métricas
 if impressoes > 0:
@@ -34,7 +44,7 @@ st.metric(label="ROAS", value=f"{roas:.2f}")
 # Gráfico interativo - evolução das métricas ao longo do tempo
 st.header("Evolução das Métricas ao Longo do Tempo")
 df = pd.DataFrame({
-    'Dia': ['Dia 1', 'Dia 2', 'Dia 3', 'Dia 4', 'Dia 5'],
+    'Dia': pd.date_range(start=start_date, periods=5, freq='D').strftime('%d/%m/%Y'),
     'Cliques': [50, 75, 100, 125, 150],
     'Impressões': [500, 600, 700, 800, 900],
     'Investimento (R$)': [100, 150, 200, 250, 300]
@@ -48,9 +58,14 @@ chart = alt.Chart(df).mark_line().encode(
 
 st.altair_chart(chart, use_container_width=True)
 
+# Gráfico adicional com Plotly para análise de impressões
+st.header("Gráfico de Impressões por Dia")
+fig = px.bar(df, x='Dia', y='Impressões', title='Impressões ao Longo do Tempo')
+st.plotly_chart(fig, use_container_width=True)
+
 # Botão para baixar relatório CSV
 st.sidebar.header("Baixar Relatório")
-@st.cache
+@st.cache_data
 def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
 
@@ -81,8 +96,6 @@ if uploaded_file:
     st.altair_chart(comparison_chart, use_container_width=True)
 
 # Relatório de resumo em PDF (opcional)
-import matplotlib.pyplot as plt
-
 def generate_pdf_report():
     fig, ax = plt.subplots()
     ax.bar(df['Dia'], df['Cliques'], label="Cliques")
@@ -100,4 +113,16 @@ if st.sidebar.button("Gerar PDF"):
     pdf = generate_pdf_report()
     st.sidebar.download_button("Baixar PDF", data=pdf, file_name="relatorio.pdf", mime="application/pdf")
 
+# Simulação de cenários
+st.header("Simulação de Cenários")
+investimento_simulado = st.slider('Simule o investimento futuro (R$)', 0, 10000, 5000)
+cliques_simulados = np.random.poisson(lam=cliques, size=5)
+df_simulacao = pd.DataFrame({
+    'Dia': pd.date_range(start=start_date, periods=5, freq='D').strftime('%d/%m/%Y'),
+    'Investimento (R$)': [investimento_simulado] * 5,
+    'Cliques Simulados': cliques_simulados,
+})
+
+fig_simulacao = px.line(df_simulacao, x='Dia', y='Cliques Simulados', title='Simulação de Cliques Futuros')
+st.plotly_chart(fig_simulacao, use_container_width=True)
 
