@@ -3,8 +3,6 @@ import pandas as pd
 import altair as alt
 from io import BytesIO
 import matplotlib.pyplot as plt
-
-# Funções adicionais
 import plotly.express as px
 import numpy as np
 
@@ -125,4 +123,3 @@ df_simulacao = pd.DataFrame({
 
 fig_simulacao = px.line(df_simulacao, x='Dia', y='Cliques Simulados', title='Simulação de Cliques Futuros')
 st.plotly_chart(fig_simulacao, use_container_width=True)
-
